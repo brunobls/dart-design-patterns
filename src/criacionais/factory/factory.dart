@@ -1,24 +1,24 @@
-abstract class ITransportadora {
+abstract class ILogistica {
   entregar();
 }
 
-class PeloAr implements ITransportadora {
+class LogisticaViaria implements ILogistica {
   final String tipo;
 
-  PeloAr({
+  LogisticaViaria({
     required this.tipo,
   });
 
   @override
   entregar() {
-    return "pelo ar por $tipo";
+    return "pela terra por $tipo";
   }
 }
 
-class PorMar implements ITransportadora {
+class LogisticaMaritima implements ILogistica {
   final String tipo;
 
-  PorMar({
+  LogisticaMaritima({
     required this.tipo,
   });
 
@@ -29,34 +29,34 @@ class PorMar implements ITransportadora {
 }
 
 abstract class Transporte {
-  ITransportadora _gerarTransportador();
+  ILogistica _gerarTransportador();
 
   entregarProdutoParaCliente(String cliente) {
     var transportador = _gerarTransportador();
 
     print(
-      "A entrefa foi feita para o cliente $cliente pelo ${transportador.entregar()}",
+      "A entrega foi feita para o cliente $cliente ${transportador.entregar()}",
     );
   }
 }
 
 class Navio extends Transporte {
   @override
-  ITransportadora _gerarTransportador() {
-    return PorMar(tipo: "Navio");
+  ILogistica _gerarTransportador() {
+    return LogisticaMaritima(tipo: "Navio");
   }
 }
 
-class Aviao extends Transporte {
+class Caminhao extends Transporte {
   @override
-  ITransportadora _gerarTransportador() {
-    return PeloAr(tipo: "Aviao");
+  ILogistica _gerarTransportador() {
+    return LogisticaViaria(tipo: "Caminhão");
   }
 }
 
 void main() {
   var cliente1 = "João";
-  var transportador1 = Aviao();
+  var transportador1 = Caminhao();
   transportador1.entregarProdutoParaCliente(cliente1);
 
   var cliente2 = "Maria";
