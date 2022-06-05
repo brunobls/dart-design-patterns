@@ -1,85 +1,173 @@
-abstract class Observer {
-  void update(double temperatura, double umidade, double pressao);
-}
+enum CategoriaDeProduto {
+  informatica("Informática"),
+  eletronicos("Eletrônicos"),
+  moveis("Móveis"),
+  brinquedos("Brinquedos"),
+  limpeza("Limpeza"),
+  saude("Saúde"),
+  higiene("Higiene"),
+  vestuario("Vestuário"),
+  outros("Outros");
 
-abstract class Subject {
-  void registerObserver(Observer observer);
-  void removeObserver(Observer observer);
-  void notifyObservers();
-}
-
-class Estatistica implements Observer {
-  final Subject weatherData;
-  Estatistica(this.weatherData);
+  final String nome;
+  const CategoriaDeProduto(this.nome);
 
   @override
-  void update(double temperatura, double umidade, double pressao) {
-    print(
-      'Estatística ->'
-      ' Temperatura média: ${temperatura.toStringAsFixed(1)}'
-      ' Umidade média: ${umidade.toStringAsFixed(1)}'
-      ' Pressão média: ${pressao.toStringAsFixed(1)}',
-    );
+  String toString() => nome;
+}
+
+class Produto {
+  String nome;
+  double preco;
+  CategoriaDeProduto categoria;
+  Produto({
+    required this.nome,
+    required this.preco,
+    required this.categoria,
+  });
+}
+
+abstract class IAssinante {
+  late List<CategoriaDeProduto> categoriasComInteresse;
+  void atualizar(Produto produto);
+}
+
+abstract class IPublicador {
+  void adicionarAssinante(IAssinante assinante);
+  void removerAssinante(IAssinante assinante);
+  void notificarAssinantes();
+}
+
+class NewsletterAmazon implements IPublicador {
+  List<IAssinante> assinantes = [];
+  late Produto produto;
+
+  @override
+  void adicionarAssinante(IAssinante assinante) {
+    assinantes.add(assinante);
   }
-}
-
-class Medidor implements Observer {
-  final Subject weatherData;
-  Medidor(this.weatherData);
 
   @override
-  void update(double temperatura, double umidade, double pressao) {
-    print(
-      'Medidor ->'
-      ' Temperatura: ${temperatura.toStringAsFixed(1)}'
-      ' Umidade: ${umidade.toStringAsFixed(1)}'
-      ' Pressão: ${pressao.toStringAsFixed(1)}',
-    );
+  void removerAssinante(IAssinante assinante) {
+    assinantes.remove(assinante);
   }
-}
-
-class DadosMeteorologicos implements Subject {
-  List<Observer> observers = [];
-  late double temperatura;
-  late double umidade;
-  late double pressao;
 
   @override
-  void notifyObservers() {
-    for (var observer in observers) {
-      observer.update(temperatura, umidade, pressao);
+  void notificarAssinantes() {
+    for (var assinante in assinantes.where(
+      (e) => e.categoriasComInteresse.contains(
+        produto.categoria,
+      ),
+    )) {
+      assinante.atualizar(produto);
     }
   }
 
-  @override
-  void registerObserver(Observer observer) {
-    observers.add(observer);
+  void setProduto({required Produto produto}) {
+    this.produto = produto;
+    notificarAssinantes();
   }
+}
+
+class Pessoa implements IAssinante {
+  final IPublicador newsletter;
+  final String nome;
 
   @override
-  void removeObserver(Observer observer) {
-    observers.remove(observer);
-  }
+  List<CategoriaDeProduto> categoriasComInteresse;
 
-  void setMedidas(double temperatura, double umidade, double pressao) {
-    this.temperatura = temperatura;
-    this.umidade = umidade;
-    this.pressao = pressao;
-    notifyObservers();
+  Pessoa({
+    required this.nome,
+    required this.newsletter,
+    required this.categoriasComInteresse,
+  });
+
+  @override
+  void atualizar(Produto produto) {
+    print(
+      'Notificado o(a) $nome sobre a chegada do novo produto: (nome: ${produto.nome} preço: ${produto.preco} categoria: ${produto.categoria.toString()})',
+    );
   }
 }
 
 void main(List<String> args) {
-  final dadosMeteorologicos = DadosMeteorologicos();
-  final estatistica = Estatistica(dadosMeteorologicos);
-  final medidor = Medidor(dadosMeteorologicos);
+  final newsletter = NewsletterAmazon();
 
-  dadosMeteorologicos.registerObserver(estatistica);
-  dadosMeteorologicos.registerObserver(medidor);
+  newsletter.adicionarAssinante(Pessoa(
+    nome: 'João',
+    newsletter: newsletter,
+    categoriasComInteresse: [
+      CategoriaDeProduto.informatica,
+      CategoriaDeProduto.eletronicos,
+      CategoriaDeProduto.moveis,
+    ],
+  ));
 
-  dadosMeteorologicos.setMedidas(10, 10, 10);
-  print('-----------------------------------------');
-  dadosMeteorologicos.setMedidas(20, 20, 20);
-  print('-----------------------------------------');
-  dadosMeteorologicos.setMedidas(30, 30, 30);
+  newsletter.adicionarAssinante(Pessoa(
+    nome: 'Maria',
+    newsletter: newsletter,
+    categoriasComInteresse: [
+      CategoriaDeProduto.informatica,
+      CategoriaDeProduto.eletronicos,
+      CategoriaDeProduto.limpeza,
+    ],
+  ));
+
+  newsletter.adicionarAssinante(Pessoa(
+    nome: 'Ana',
+    newsletter: newsletter,
+    categoriasComInteresse: [
+      CategoriaDeProduto.informatica,
+      CategoriaDeProduto.eletronicos,
+      CategoriaDeProduto.saude,
+    ],
+  ));
+
+  newsletter.adicionarAssinante(Pessoa(
+    nome: 'José',
+    newsletter: newsletter,
+    categoriasComInteresse: [
+      CategoriaDeProduto.informatica,
+      CategoriaDeProduto.eletronicos,
+      CategoriaDeProduto.vestuario,
+    ],
+  ));
+
+  newsletter.setProduto(
+    produto: Produto(
+      nome: 'Monitor de 19"',
+      preco: 1500.0,
+      categoria: CategoriaDeProduto.eletronicos,
+    ),
+  );
+
+  print('\n');
+
+  newsletter.setProduto(
+    produto: Produto(
+      nome: 'Teclado',
+      preco: 100.0,
+      categoria: CategoriaDeProduto.informatica,
+    ),
+  );
+
+  print('\n');
+
+  newsletter.setProduto(
+    produto: Produto(
+      nome: 'Fogão',
+      preco: 800.0,
+      categoria: CategoriaDeProduto.moveis,
+    ),
+  );
+
+  print('\n');
+
+  newsletter.setProduto(
+    produto: Produto(
+      nome: 'Complexo de vitaminas',
+      preco: 200.0,
+      categoria: CategoriaDeProduto.saude,
+    ),
+  );
 }
